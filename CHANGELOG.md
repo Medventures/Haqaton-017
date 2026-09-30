@@ -176,3 +176,7 @@
 ## 2026-09-30 17:13:54 +05:00 — Синхронизированы main и dev хакатона с актуальной dev MedHub
 
 Изменены: `.env.example`, `.gitignore`, `README.md`, `backend/Dockerfile`, `backend/app/config.py`, `backend/app/consent_sigex.py`, `backend/app/eds_local.py`, `backend/app/identity_xml.py`, `backend/tests/test_eds_local.py`, `backend/tests/test_identity_xml.py`, `backend/tests/test_patient_consents.py`, `backend/verifier/README.md`, `backend/verifier/Verifier.java`, `backend/verifier/VerifierChecks.java`, `backend/verifier/dependencies.sha256`, `backend/verifier/trust/nca_gost_2022.cer`, `backend/verifier/trust/nca_rsa_2022.cer`, `backend/verifier/trust/root_gost_2022.cer`, `backend/verifier/trust/root_rsa_2020.cer`, `deploy/update-service-release.sh`.
+
+## 2026-09-30 17:16:24 +05:00 — Добавлен код приглашения и порядок регистрации в публичном демо
+
+Изменены: `README.md`.
