@@ -39,16 +39,17 @@ def envelope(certificate):
 def test_xml_requires_remote_crypto_and_exact_canonical_content(certificate, monkeypatch):
     xml, root = envelope(certificate)
     calls = []
-    def verify(content, signature, iin, **kwargs):
+    def verify(kind, signature, content, iin):
         calls.append(iin)
         assert content == etree.tostring(etree.fromstring(xml.encode()), method='c14n')
-        assert etree.fromstring(signature.encode()).tag == '{' + DS + '}Signature'
-        assert kwargs['sign_type'] == 'xml'
-    monkeypatch.setattr('app.identity_xml.register_signature', verify)
+        assert etree.fromstring(signature).tag == 'authentication'
+        assert kind == 'xml'
+        return {'verified': True, 'signer_iin': iin}
+    monkeypatch.setattr('app.identity_xml.verify_local', verify)
     assert verify_xml(etree.tostring(root).decode(), xml)['identity'] == 'IIN000000000001'
     assert calls == ['000000000001']
     def rejected(*args, **kwargs): raise ConsentVerificationError('invalid_signature')
-    monkeypatch.setattr('app.identity_xml.register_signature', rejected)
+    monkeypatch.setattr('app.identity_xml.verify_local', rejected)
     with pytest.raises(ConsentVerificationError): verify_xml(etree.tostring(root).decode(), xml)
 
 
@@ -63,5 +64,5 @@ def test_xml_tamper_and_wrapping_rejected_before_network(certificate, monkeypatc
     if fault == 'nested': root.remove(sig); etree.SubElement(root, 'wrapper').append(sig)
     signed = etree.tostring(root).decode()
     if fault == 'xxe': signed = '<!DOCTYPE authentication [<!ENTITY x SYSTEM "file:///secret">]>' + signed
-    monkeypatch.setattr('app.identity_xml.register_signature', lambda *a, **k: pytest.fail('Must reject before network'))
+    monkeypatch.setattr('app.identity_xml.verify_local', lambda *a, **k: pytest.fail('Must reject before network'))
     with pytest.raises(ValueError): verify_xml(signed, xml, '000000000002' if fault == 'iin' else '')

@@ -1,4 +1,4 @@
-"""Одноразовый читаемый XML; криптографию, OCSP и TSP проверяет SIGEX."""
+"""Одноразовый XML; криптография и цепочка НУЦ проверяются локально, отзыв — через OCSP."""
 import base64
 import copy
 import re
@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from lxml import etree
 from cryptography import x509
 from cryptography.x509.oid import NameOID
-from .consent_sigex import register_signature
+from .eds_local import verify_local
 
 DS = 'http://www.w3.org/2000/09/xmldsig#'
 C14N = 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315'
@@ -80,7 +80,7 @@ def verify_xml(signed, expected, expected_iin='', *, checkpoint=None, resume=Non
     iin = serials[0].value[3:]
     if expected_iin and not secrets.compare_digest(iin, expected_iin):
         raise ValueError('iin_mismatch')
-    # Извлечённый ИИН пока недоверенный. SIGEX обязан проверить его у единственного подписанта.
+    # Извлечённый ИИН пока недоверенный. Локальный модуль проверяет подпись, цепочку и OCSP.
     unsigned = copy.deepcopy(root)
     sig = unsigned.find('./{' + DS + '}Signature')
     previous, tail = sig.getprevious(), sig.tail or ''
@@ -89,7 +89,8 @@ def verify_xml(signed, expected, expected_iin='', *, checkpoint=None, resume=Non
     unsigned.remove(sig)
     algorithm = algorithms[-1] if len(algorithms) == 2 else C14N
     content = etree.tostring(unsigned, method='c14n', exclusive=algorithm.startswith(EXCLUSIVE), with_comments=algorithm.endswith('WithComments'))
-    register_signature(content, etree.tostring(signature, encoding='unicode'), iin, sign_type='xml',
-                       title='Smart Consult — одноразовое подтверждение входа', checkpoint=checkpoint, resume=resume)
+    proof = verify_local('xml', signed.encode(), content, iin)
+    if proof.get('verified') is not True or proof.get('signer_iin') != iin:
+        raise ValueError('signature_rejected')
     names = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
     return {'identity': 'IIN' + iin, 'name': names[0].value if names else 'Врач'}

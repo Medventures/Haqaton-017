@@ -7,6 +7,18 @@ test -f "$release/backend/requirements.lock"
 test -f "$release/ui/index.html"
 previous=$(readlink -f /opt/medhub/current)
 case "$previous" in /opt/medhub/releases/*) ;; *) exit 1;; esac
+# SDK не хранится в Git. Следующие релизы наследуют только библиотеки проверяющего модуля.
+if [ ! -f "$release/backend/verifier/lib/knca_provider_jce_kalkan-0.7.5.jar" ]; then
+    cp -a "$previous/backend/verifier/lib" "$release/backend/verifier/lib"
+fi
+if ! command -v javac >/dev/null 2>&1; then
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -qq
+    apt-get install -y --no-install-recommends openjdk-17-jdk-headless
+fi
+mkdir -p "$release/backend/verifier/classes"
+javac --release 17 -encoding UTF-8 -cp "$release/backend/verifier/lib/*" -d "$release/backend/verifier/classes" "$release/backend/verifier/Verifier.java"
+java -cp "$release/backend/verifier/classes:$release/backend/verifier/lib/*" Verifier --self-test "$release/backend/verifier/trust"
 python3 -m venv "$release/.venv"
 "$release/.venv/bin/pip" install -q --disable-pip-version-check -r "$release/backend/requirements.txt" -c "$release/backend/requirements.lock"
 set -a

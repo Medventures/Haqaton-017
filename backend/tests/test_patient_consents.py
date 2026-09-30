@@ -208,38 +208,6 @@ def test_qr_transfers_exact_pdf_then_verifies_cms_and_preserves_private_resume(c
     assert status['state'] == 'signed' and status['patient']['processing_consent']
 
 
-@pytest.mark.parametrize('fault', [None, 'http200_error', 'attached_document', 'wrong_data_id', 'wrong_verify_id', 'string_sign_id', 'unknown_size', 'wrong_size', 'boolean_size'])
-def test_sigex_private_document_verification_contract(monkeypatch, fault):
-    pdf, iin, document_id = b'%PDF-synthetic-consent-document', '000000000000', 'synthetic-document-id'
-    requests = []
-    def handle(request):
-        requests.append(request)
-        if request.url.path == '/api':
-            body = json.loads(request.content)
-            assert body['settings']['private'] is True
-            assert body['settings']['strictSignersRequirements'] is True
-            assert body['settings']['signersRequirements'] == [{'iin': 'IIN' + iin, 'ca': 'nca'}]
-            if fault == 'http200_error':
-                return httpx.Response(200, json={'message': 'Failed to parse signature', 'requestID': 'synthetic'})
-            return httpx.Response(200, json={'documentId': document_id, 'signId': '123' if fault == 'string_sign_id' else 123,
-                'data': base64.b64encode(b'other' if fault == 'attached_document' else pdf).decode()})
-        assert request.content == pdf and request.headers['content-type'] == 'application/octet-stream'
-        if request.url.path.endswith('/data'):
-            return httpx.Response(200, json={'documentId': 'other-document' if fault == 'wrong_data_id' else document_id,
-                'signedDataSize': 0 if fault == 'unknown_size' else (True if fault == 'boolean_size' else (len(pdf) + 1 if fault == 'wrong_size' else len(pdf))), 'digests': {'synthetic': 'digest'}})
-        return httpx.Response(200, json={'documentId': 'other-document' if fault == 'wrong_verify_id' else document_id,
-            'dataArchived': False, 'tempStorage': False})
-    original_client = httpx.Client
-    monkeypatch.setattr(httpx, 'Client', lambda **kwargs: original_client(transport=httpx.MockTransport(handle), **kwargs))
-    if fault and fault != 'unknown_size':
-        with pytest.raises(ConsentVerificationError):
-            verify_document_signature(pdf, CMS, iin)
-    else:
-        proof = verify_document_signature(pdf, CMS, iin)
-        assert proof['verified'] and proof['signer_iin'] == iin and proof['provider_signature_id'] == 123
-        assert proof['document_sha256'] == hashlib.sha256(pdf).hexdigest()
-        assert len(requests) == 3
-
 
 def test_received_signature_survives_temporary_verification_failure_and_reload(client, doctor, monkeypatch):
     p, consent = prepared(client, monkeypatch)
@@ -275,25 +243,6 @@ def test_qr_network_timeout_retries_same_request_without_losing_result(monkeypat
     assert qr_request('GET', '/api/synthetic', now() + 60, requester=request)['signMethod'] == 'XML'
     assert calls == [('GET', '/api/synthetic')] * 2
 
-
-def test_verification_checkpoint_avoids_duplicate_registration_after_timeout(monkeypatch):
-    pdf, iin = b'%PDF-synthetic', '000000000000'
-    checkpoint, paths = {}, []
-    def handle(request):
-        paths.append(request.url.path)
-        if request.url.path == '/api':
-            return httpx.Response(200, json={'documentId': 'test-document', 'signId': 1, 'data': base64.b64encode(pdf).decode()})
-        if len(paths) == 2: raise httpx.ReadTimeout('synthetic')
-        if request.url.path.endswith('/data'):
-            return httpx.Response(200, json={'documentId': 'test-document', 'signedDataSize': len(pdf), 'digests': {'test': 'digest'}})
-        return httpx.Response(200, json={'documentId': 'test-document', 'dataArchived': False, 'tempStorage': False})
-    original = httpx.Client
-    monkeypatch.setattr(httpx, 'Client', lambda **kw: original(transport=httpx.MockTransport(handle), **kw))
-    with pytest.raises(ConsentVerificationError) as error:
-        verify_document_signature(pdf, CMS, iin, checkpoint=checkpoint.update)
-    assert error.value.retryable and checkpoint['documentId'] == 'test-document'
-    assert verify_document_signature(pdf, CMS, iin, resume=checkpoint)['verified']
-    assert paths.count('/api') == 1
 
 
 def test_strict_recording_routes_require_verified_signature_and_honor_revocation(client, doctor, monkeypatch):

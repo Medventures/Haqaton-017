@@ -49,3 +49,7 @@ _netrc
 *.sql.gz
 *.sqlite
 *.sqlite3
+
+# SDK НУЦ поставляется отдельно; бинарные зависимости и сборка проверяющего модуля.
+backend/verifier/lib/
+backend/verifier/classes/
