@@ -1,0 +1,26 @@
+[Unit]
+Description=medhub FastAPI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=medhub
+Group=medhub
+WorkingDirectory=/opt/medhub/current/backend
+EnvironmentFile=/opt/medhub/shared/app.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/medhub/current/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8010 --no-access-log
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/medhub/shared/audio
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

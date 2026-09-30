@@ -1,0 +1,53 @@
+name: medhub
+x-backend: &backend
+  image: medhub-api:${MEDHUB_RELEASE:?Set MEDHUB_RELEASE}
+  env_file: /opt/medhub/shared/app.env
+  environment:
+    AUDIO_DIR: /data/audio
+  init: true
+  logging:
+    driver: json-file
+    options: {max-size: '10m', max-file: '3'}
+services:
+  migrate:
+    <<: *backend
+    command: [alembic, upgrade, head]
+    mem_limit: 256m
+  api:
+    <<: *backend
+    ports: ['127.0.0.1:8010:8000']
+    volumes: [audio_data:/data/audio]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 512m
+    restart: unless-stopped
+  worker:
+    <<: *backend
+    command: [python, -m, app.worker]
+    volumes: [audio_data:/data/audio]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    mem_limit: 768m
+    restart: unless-stopped
+  ui:
+    image: medhub-ui:${MEDHUB_RELEASE:?Set MEDHUB_RELEASE}
+    ports: ['127.0.0.1:5174:80']
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1/]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    mem_limit: 128m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: '10m', max-file: '3'}
+volumes:
+  audio_data:

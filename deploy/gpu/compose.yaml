@@ -1,0 +1,29 @@
+name: medhub-models
+services:
+  asr:
+    build:
+      context: ../..
+      dockerfile: deploy/gpu/Dockerfile
+    gpus: all
+    environment:
+      ASR_PROVIDER: faster_whisper
+      ASR_MODEL: /models/faster-whisper-large-v3
+      ASR_DEVICE: cuda
+      ASR_COMPUTE_TYPE: float16
+      DIARIZATION_MODEL: /models/pyannote-speaker-diarization-community-1
+      ASR_SERVICE_TOKEN: ${ASR_SERVICE_TOKEN:?Set a random token in deploy/gpu/.env}
+      HF_HUB_OFFLINE: '1'
+      PYANNOTE_METRICS_ENABLED: '0'
+      MAX_AUDIO_MB: '80'
+    volumes: ['${MODELS_PATH:?Set MODELS_PATH}:/models:ro']
+    ports: ['${BIND_IP:-127.0.0.1}:8090:8090']
+    tmpfs: ['/tmp:size=512m,mode=1777']
+    restart: unless-stopped
+  ollama:
+    image: ollama/ollama:latest
+    gpus: all
+    volumes: [ollama_data:/root/.ollama]
+    ports: ['${BIND_IP:-127.0.0.1}:11434:11434']
+    restart: unless-stopped
+volumes:
+  ollama_data:

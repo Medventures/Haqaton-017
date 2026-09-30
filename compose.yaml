@@ -1,0 +1,63 @@
+name: medhub
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-medhub}
+      POSTGRES_USER: ${POSTGRES_USER:-medhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/setup.ps1 first}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+  migrate:
+    build: ./backend
+    env_file: .env
+    command: [alembic, upgrade, head]
+    depends_on:
+      db:
+        condition: service_healthy
+  api:
+    build: ./backend
+    env_file: .env
+    ports: ['127.0.0.1:8010:8000']
+    volumes: [audio_data:/data/audio]
+    extra_hosts: ['host.docker.internal:host-gateway']
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  worker:
+    build:
+      context: ./backend
+      args:
+        INSTALL_LOCAL_AI: ${INSTALL_LOCAL_AI:-false}
+    env_file: .env
+    command: [python, -m, app.worker]
+    volumes:
+      - audio_data:/data/audio
+      - ${MODELS_PATH:-./models}:/models:ro
+    extra_hosts: ['host.docker.internal:host-gateway']
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  ui:
+    build: ./frontend
+    ports: ['127.0.0.1:5173:80']
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  audio_data:

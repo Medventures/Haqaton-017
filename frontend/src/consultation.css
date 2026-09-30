@@ -1,0 +1,74 @@
+.visit-toolbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:16px 0;padding:18px 22px}
+.visit-timer{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#8A5C43}
+.visit-timer strong{font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.visit-timer small{flex-basis:100%;color:#796657}
+.visit-toolbar-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pdf-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.conversation-recording{border-bottom:1px solid #E9CFBA;padding-bottom:18px;margin-bottom:18px}
+.microphone-settings{margin:16px 0;color:#796657;font-size:14px}
+.microphone-settings summary{cursor:pointer;color:#8A5C43;padding:6px 0}
+.microphone-settings label{margin-top:12px}
+.capture-closed{padding:16px;background:#F9F5F1;border-radius:16px;font-size:14px;line-height:1.6;color:#796657}
+.previous-selector{padding:16px 0;border-bottom:1px solid #E9CFBA}
+.document-only{grid-template-columns:minmax(0,1fr);max-width:1100px;margin:auto}
+.leave-modal{max-width:540px}
+.leave-modal p{line-height:1.65;color:#796657}
+.leave-actions{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.uploaded-audio{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.consultation-document .clinical-section{scroll-margin-top:90px}
+.consultation-document .field-links{flex-wrap:wrap}
+.consultation-document .ai-conclusion-notice{line-height:1.65}
+.transcript-panel h3{display:flex;align-items:center;gap:8px}
+.visit-selectors select,.previous-selector select{min-height:44px}
+.consultation-document input[readonly]{background:#F9F5F1;color:#796657}
+.consultation-left .record-buttons{flex-wrap:wrap}
+.consultation-left .record-buttons button{white-space:normal;min-width:0;line-height:1.4}
+@media(max-width:700px){.visit-toolbar{align-items:stretch;flex-direction:column;padding:16px}.visit-toolbar-actions{display:grid;grid-template-columns:1fr}.visit-toolbar-actions button,.pdf-link{justify-content:center}.visit-timer strong{font-size:22px}.consultation-heading h1{font-size:28px}.leave-modal{margin:14px}.document-heading{align-items:stretch;flex-direction:column}}
+
+/* Поля и итоговый результат используют всю ширину кабинета. */
+.consultation-workspace.consultation-workspace{grid-template-columns:minmax(0,1fr);max-width:none;width:100%}
+.consultation-workspace .consultation-left{display:flex;flex-direction:column;width:100%}
+.transcript-disclosure>summary{cursor:pointer;padding:20px 24px;color:#8A5C43;font-size:18px;font-weight:650;border-top:1px solid #E9CFBA}
+.transcript-disclosure>summary .hint{font-size:13px;font-weight:400;margin-left:12px}
+.ai-advisory{margin:0;min-width:0}
+.ai-advisory .document-heading h3{display:flex;align-items:center;gap:10px}
+.ai-advisory-content{padding:0 24px 24px}
+.ai-advisory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:20px}
+.ai-advisory-grid article{padding:20px;border:1px solid #E9CFBA;border-radius:16px;background:#FFFCF9;min-width:0}
+.ai-advisory-grid h4{font-size:18px;color:#8A5C43;margin:0 0 12px;line-height:1.5}
+.ai-advisory-grid p,.legacy-ai p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+.ai-advisory-grid ul{padding-left:20px;font-size:14px}
+.legacy-ai{margin-top:20px}.legacy-ai summary{cursor:pointer;color:#8A5C43}
+.recording-privacy-notice{padding:16px 18px;margin-bottom:18px;border:1px solid #E9CFBA;border-radius:16px;background:#F9F5F1;color:#3E2E20;line-height:1.65}
+.recording-privacy-notice strong{display:block;color:#8A5C43;font-size:16px}
+.recording-privacy-notice p{margin:9px 0;font-size:14px}
+.recording-privacy-notice small{display:block;color:#6F5947;font-size:12px}
+.final-result .final-actions{position:static;display:flex;flex-wrap:wrap;gap:12px}
+.final-result .final-actions button{flex:1;justify-content:center}
+@media(max-width:700px){.ai-advisory-grid{grid-template-columns:1fr}.ai-advisory-content{padding:0 19px 20px}.transcript-disclosure>summary .hint{display:block;margin:8px 0 0}.final-result .final-actions{padding:19px}}
+
+/* Компактная панель записи: действия не растягиваются по всей ширине листа. */
+.transcript-panel .conversation-recording{padding:0 26px 22px}
+.conversation-recording .recording-meter{display:flex;flex-wrap:nowrap;gap:14px;margin:16px 0;padding:16px 18px;min-height:76px;background:#F9F5F1;border:1px solid #E9CFBA;border-radius:16px}
+.conversation-recording .record-clock{font-size:28px;font-weight:600;margin:0;flex:none}
+.conversation-recording .recording-status{font-size:13px;color:#887565;line-height:1.4}
+.conversation-recording .recording-status.active{color:#A03A35}
+.conversation-recording .recording-status.paused{color:#8A5C43}
+.conversation-recording .recording-meter .record-wave{display:flex;flex:0 1 150px;margin-left:auto;height:40px;justify-content:flex-end;overflow:hidden}
+.consultation-left .record-buttons{gap:12px;margin:0 0 12px;align-items:center}
+.consultation-left .record-buttons button{flex:0 1 auto;width:auto;min-height:46px;padding:12px 20px;border-radius:14px;font-size:14px}
+.conversation-recording button svg{flex-shrink:0}
+.conversation-recording .microphone-settings{margin:18px 0}
+.conversation-recording .microphone-settings summary{cursor:pointer;color:#8A5C43;font-size:14px}
+.audio-upload-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px;border-top:1px solid #E9CFBA;padding-top:18px;margin-top:18px}
+.audio-upload-row button{min-height:44px;border-radius:14px;font-size:14px}
+.audio-upload-row .hint{flex:1 1 220px}
+.audio-file-input{display:none}
+@media(max-width:700px){
+ .transcript-panel .conversation-recording{padding:0 19px 18px}
+ .conversation-recording .recording-meter{padding:12px;gap:10px}
+ .conversation-recording .record-clock{font-size:24px}
+ .conversation-recording .recording-meter .record-wave{flex-basis:65px}
+ .consultation-left .record-buttons button{flex:1 1 100%;width:100%}
+ .audio-upload-row button{width:100%}
+}
